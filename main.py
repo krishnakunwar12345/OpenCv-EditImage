@@ -8,9 +8,8 @@ UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'png', 'webp', 'jpg', 'jpeg', 'gif'}
 
 app = Flask(__name__)
+app.secret_key = 'super secret key'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# app = Flask(__name__)
 
 
 def allowed_file(filename):
@@ -24,7 +23,20 @@ def processImage(filename, operation):
     match operation:
         case "cgrey":
             imgProcessed = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            cv2.imwrite(f"static/{filename}",imgProcessed)
+            newFilename = f"static/{filename}"
+            cv2.imwrite(newFilename, imgProcessed)
+        case "cwebp":
+            newFilename = f"static/{filename.split('.')[0]}.webp"
+            cv2.imwrite(newFilename,img)
+            return newFilename           
+        case "cjpg":
+            newFilename = f"static/{filename.split('.')[0]}.jpg"
+            cv2.imwrite(newFilename,img)
+            return newFilename
+        case "cpng":
+            newFilename = f"static/{filename.split('.')[0]}.png"
+            cv2.imwrite(newFilename,img)
+            return newFilename    
     pass
 
 
@@ -55,8 +67,11 @@ def edit():
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            processImage(filename, operation)
+            new = processImage(filename, operation)
+            flash(
+                f"Your image has been processed and is available <a href='/{new}' target='_blank'>here</a>")
             return render_template("index.html")
+
     return render_template("index.html")
 
 
